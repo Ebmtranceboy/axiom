@@ -6,6 +6,7 @@ summary()
 )display operation complex
 )abbreviation query COMPCAT
 )history )write
+)history )restore)
 )cd
 )set quit unprotected in ~/.axiom.input
 )display value facto
@@ -13,6 +14,13 @@ summary()
 )set expose add constructor OutputForm
 )set expose drop constructor OutputForm
 )set streams calculate 5
+)describe categoryName
+)include filename
+)library )dir
+)savesystem filename
+)spool integrate.out
+)synonym save  history )save
+
 
 function(p,’f2,’x,’y)
 p := compiledFunction(%,x)$MakeUnaryCompiledFunction(POLY FRAC INT,DFLOAT,DFLOAT)
@@ -28,3 +36,4 @@ mytestset.input
 difference(getDomains 'IndexedAggregate, getDomains 'Collection)
 
 p.1031 s/is R is/if R is
+p.1036 s/The Implementation...be declared//
