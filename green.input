@@ -1,0 +1,61 @@
+)clear all
+
+param := Polynomial(Integer);
+record := Record(x: param, y: param);
+
+bottomLeft: Record(x: Integer, y: Integer) := (1, -2)
+topRight: Record(x: Integer, y: Integer)  := (4, 2)
+
+-- parametrage de l'abscisse curviligne rectangulaire
+bottom: record := [bottomLeft.x + (topRight.x - bottomLeft.x)*t, bottomLeft.y];
+right:  record := [topRight.x, bottomLeft.y + (topRight.y - bottomLeft.y)*t];
+top:    record := [topRight.x - (topRight.x - bottomLeft.x)*t, topRight.y];
+left:   record := [bottomLeft.x, topRight.y - (topRight.y - bottomLeft.y)*t];
+rectangle := [bottom, right, top, left];
+
+-- any function whose partial derivatives are continuous inside the domain
+z := complex(x,y);
+f := z * conjugate(z) - 3/(z-13) -1;
+
+--------------------- integration of f(z) along the rectangle -----------------
+
+p := real(f);
+q := imag(f);
+
+realSegment(rec) == integrate(subst(p, [x = rec.x, y = rec.y]) * D(rec.x, t) 
+                            - subst(q, [x = rec.x, y = rec.y]) * D(rec.y, t), t)
+
+imagSegment(rec) == integrate(subst(q, [x = rec.x, y = rec.y]) * D(rec.x, t) 
+                            + subst(p, [x = rec.x, y = rec.y]) * D(rec.y, t), t)
+
+logrules := rule 
+       ?c*log(x) + ?c*log(y) == c*log(x*y)
+       ?c*log(x) - ?c*log(y) == c*log(x/y)
+       
+sgn(x) == x/abs(x)
+atanrules := rule 
+       ?c*atan(x) + ?c*atan(y) == c*atan((x+y)/(1-x*y))
+       ?c*atan(x) + ?c*atan(y | x*y=1) == c * sgn(x) * %pi/2
+
+reduce(+, map(realSegment, rectangle))
+realDomain := logrules atanrules (eval(%, t=1) - eval(%, t=0));
+reduce(+, map(imagSegment, rectangle))
+imagDomain := logrules atanrules (eval(%, t=1) - eval(%, t=0));
+
+integ_f_along := realDomain + %i * imagDomain;
+
+-------------------- integration of df/d(bar z) inside the rectangle ------
+
+Dfzb := (D(f,x) - D(f,y)/%i) / 2;
+
+integ_df_inside := 
+    2 * %i * 
+       integrate(
+          integrate(Dfzb, x = bottomLeft.x .. topRight.x), 
+             y = bottomLeft.y ..topRight.y)
+
+--------------------------------------------------------------------------
+
+if integ_f_along = integ_df_inside then "QED"
+
+

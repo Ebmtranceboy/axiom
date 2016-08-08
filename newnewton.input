@@ -1,0 +1,34 @@
+)clear all
+
+zeros := [a,b,c];
+poles := [d,e,f];
+
+nz := #zeros;
+np := #poles;
+
+f(n,r) == map(z +-> z^n, r)
+g(n) == reduce(+, f(n, zeros)) - reduce (+, f(n, poles))
+
+j := map(g, [i for i in 1..nz+np]);
+
+h(n,i) == factorial(n-2) / factorial(n-i-1)
+
+k := [1];
+
+for n in 2..nz+np+1 repeat k := concat(k, reduce(+, [h(n,i) * j.i * k.(n-i) for i in 1..n-1]));
+k := [k.i for i in 2..#k];
+
+)set functions cache
+
+s(0,p) == -j.1
+s(1,p) == 2 * k.(p+1) / ((p+1) * k.p) - j.1
+s(z,p) == 
+        local s10, s1m1, s1p1;
+        
+        s10 := s(z-1,p);
+        s1m1 := s(z-1,p-1);
+        s1p1 := s(z-1,p+1);
+        (s10 * (s1m1 - s1p1) + s(z-2,p) * (s1p1 - s10)) / (s1m1 - s10)
+
+if s(nz,np) = reduce(+, append(zeros, poles)) then "QED"
+

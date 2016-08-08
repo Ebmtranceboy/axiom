@@ -1,0 +1,5 @@
+)clear all
+y := operator 'y;
+deq := D(y x, x, 2) = - y x;
+
+solve(deq,  y, x=0, [x0,x1])

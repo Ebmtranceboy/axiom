@@ -1,0 +1,54 @@
+)clear all
+-- parametrage de l'abscisse curviligne rectangulaire
+-- 
+param := Polynomial(Integer);
+record := Record(x: param, y: param);
+--
+bottom: record := [1 + 3*t, -2];
+right:  record := [4, -2 + 4*t];
+top:    record := [4 - 3*t, 2];
+left:   record := [1, 2 - 4*t];
+rectangle := [bottom, right, top, left];
+
+-- any values in the rectangle for the rational analytic function f
+zeros := [2 + %i, 2 - %i];
+poles := [3, 3, 5/2 + %i/2];
+
+-- any analytic function continuous on the domain
+g(z) == z^2 + 3*z - 1
+
+--------------------- arg = integration of h(z) along the rectangle -----------------
+z := complex(x,y);
+f := reduce(*, [z - zi for zi in zeros]) / reduce(*, [z - pi for pi in poles]);
+Dfz := (D(f,x) + D(f,y)/%i) / 2;
+
+h := g(z) * Dfz / f;
+
+p := real(h);
+q := imag(h);
+
+realSegment(rec) == integrate(subst(p, [x = rec.x, y = rec.y]) * D(rec.x, t) 
+                            - subst(q, [x = rec.x, y = rec.y]) * D(rec.y, t), t)
+
+imagSegment(rec) == integrate(subst(q, [x = rec.x, y = rec.y]) * D(rec.x, t) 
+                            + subst(p, [x = rec.x, y = rec.y]) * D(rec.y, t), t)
+
+logrules := rule 
+       ?c*log(x) + ?c*log(y) == c*log(x*y)
+       ?c*log(x) - ?c*log(y) == c*log(x/y)
+       
+sgn(x) == x/abs(x)
+atanrules := rule 
+       ?c*atan(x) + ?c*atan(y) == c*atan((x+y)/(1-x*y))
+       ?c*atan(x) + ?c*atan(y | x*y=1) == c * sgn(x) * %pi/2
+
+reduce(+, map(realSegment, rectangle))
+realDomain := logrules atanrules (eval(%, t=1) - eval(%, t=0));
+reduce(+, map(imagSegment, rectangle))
+imagDomain := logrules atanrules (eval(%, t=1) - eval(%, t=0));
+
+arg := (realDomain + %i * imagDomain) / (2 * %i * %pi);
+----------------------------------------------------------------------------------------
+
+if arg = reduce(+, map(g, zeros)) - reduce(+, map(g, poles)) then "QED"
+

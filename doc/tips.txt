@@ -1,0 +1,30 @@
+summary()
+)what operations integrate
+)what domain matrix
+)what package gauss
+)show Any
+)display operation complex
+)abbreviation query COMPCAT
+)history )write
+)cd
+)set quit unprotected in ~/.axiom.input
+)display value facto
+)set functions cache all
+)set expose add constructor OutputForm
+)set expose drop constructor OutputForm
+)set streams calculate 5
+
+function(p,’f2,’x,’y)
+p := compiledFunction(%,x)$MakeUnaryCompiledFunction(POLY FRAC INT,DFLOAT,DFLOAT)
+factorFraction((x**2-4)/(y**2-4))
+Matrix Integer has commutative("*")
+mytestset.input
+
+   )spool mytestset.output
+   3+5
+   6+7
+   )spool
+   
+difference(getDomains 'IndexedAggregate, getDomains 'Collection)
+
+p.1031 s/is R is/if R is

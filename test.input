@@ -1,0 +1,50 @@
+)clear all 
+
+z:=complex(x,y)
+f:=(z^2-4*z+5)/(z-3)
+Dfz:=(D(f,x)+D(f,y)/%i)/2
+g:=z*Dfz/f
+
+u:=(g+conjugate(g))/2
+v:=(g-conjugate(g))/(2*%i)
+
+u+%i*v-g
+
+p:=u
+q:=-v
+integrate(D(q,x)-D(p,y),x)
+integrate(eval(%,x=4)-eval(%,x=1),y)
+eval(%,y=2)-eval(%,y=-2)
+
+bitsSet(n) ==
+  local xs,i,r
+  xs := []
+  i := 0
+  while n > 0 repeat
+     r := rem(n,2)
+     if r = 1 then xs := if empty? xs then [i] else cons(i,xs)
+     i := i+1
+     n := quo(n-r, 2)
+  xs
+
+powerSet(xs | empty? xs) == [[]]
+powerSet(xs) ==
+   local head, powerRest
+   head := first xs
+   powerRest := powerSet(rest xs)
+   append(powerRest, 
+          [(if empty? subset then [head] 
+            else cons(head, subset)) for subset in powerRest])
+   
+macro fibStream ==
+   present : Integer := 1
+   future : Integer := 1
+   [next for i in 1..] where
+      macro next ==
+        past := present
+        present := future
+        future := past + present
+
+fix(f,x) == f(fix(f,x),x)
+facto(rec,x) == if x=0 then 1 else x*rec(rec,x-1)
+fact(x) == fix(facto,x)
