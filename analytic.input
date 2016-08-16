@@ -1,0 +1,12 @@
+linseg(start, dur, end) == 
+   compiledFunction((x*end + (dur-x)*start)/dur, x)$MakeUnaryCompiledFunction(POLY FRAC INT, FRAC INT, FRAC INT)
+
+sawtooth x == -2 * atan (1/tan(%pi * x)) / %pi
+
+phasor(freq, x) == (1+sawtooth(x*freq))/2
+
+entier x == x - phasor(1, x)
+
+wrap(a,x) == x - entier(x/a) * a
+
+sgn x == x/abs(x)

@@ -1,0 +1,868 @@
+%!PS-Adobe-2.0
+%%DocumentFonts: Times-Roman
+%%Creator: Axiom
+%%CreationDate: today
+%%Pages: 1
+%%processing (hard) limit: 250 pts or 500 values for the operand stack.
+%%EndComments
+
+%------------------------------- prologue -------------------------------%
+%-------------------------- support procedures --------------------------%
+
+%--------- first create user dictionary with 100 entries max ------------%
+%          (number can be changed to accomodate definitions)             %
+
+100	dict	begin		%% using 100 entries in top level dictionary
+
+/FontHeight     12 def
+
+/inch
+        {       72 mul }
+        def
+
+% yVal and hVal are necessary because the Xwindow display origin
+% is at the upper left corner, while the postscript display
+% origin is at the lower left hand corner.
+
+/yVal		%% get Y value -- make upper left corner origin
+        {       maxY exch sub  }	%% maxY is viewWindow height
+        def
+
+/hVal		%% get H value -- used for displaying title text
+        {       maxH sub abs }	%% maxH is viewWindow height+titleWindow height
+        def
+
+% loads in the font
+
+/loadFont
+        {       /Times-Roman findfont FontHeight scalefont setfont }
+        def
+
+% draws a rectangle with input operand: 
+%		height
+%		width
+% notice that this function does not "draw" or ink the rectangle.
+/drawRect
+	{	1 index 1 add 0 rlineto		%% draw first side
+                0 exch 1 add neg rlineto	%% draw second side
+                1 add neg 0 rlineto		%% draw third side
+                closepath }			%% draw fourth side
+        def
+
+% create a rectangle with input operand in the view window: 
+%		y
+%		x
+%		height
+%		width
+% notice that this function does not "draw" or ink the rectangle.
+/rectangle
+        {       yVal moveto			%% set currentpoint for line
+		drawRect }			%% draws the rectangle
+        def
+
+% These are global variables that every draw procedure uses
+% THe operand should be as follows:
+%		viewWindow width
+%		viewWindow height
+%		title height
+/setDim
+        {       /maxX exch def			%% width of display
+                /maxY exch def			%% height of display
+		/titleH exch def		%% height of title
+		/maxH maxY titleH add def	%% height of display + title
+        } def
+
+%-------------------------- major procedures --------------------------%
+
+/title		%% draws a rectangle around the title of picture
+	{	gsave
+		newpath
+		moveto				%% lower left of title
+                titleH 1 add 0 exch rlineto	%% draw first side
+                1 add 0 rlineto			%% draw second side
+                1 add neg 0 exch rlineto
+		begin installGC stroke end	%% draw third side
+		grestore }
+	def
+
+/drawFrame      %% draw display frame
+        {	gsave
+                newpath
+                maxX maxY 0 0 rectangle
+		begin installGC stroke end
+                grestore }
+        def
+
+% updates the foreground color of existing graphics-context dictionary:
+%		foreground color
+%		dictionary name
+/setForeground
+	{	/FGcolor exch put }
+	def
+
+% updates the background color of existing graphics-context dictionary:
+%		background color
+%		dictionary name
+/setBackground
+	{	/BGcolor exch put }
+	def
+
+% updates the line width, line style, cap style, join style of
+% existing graphics-context dictionary:
+%		dictionary name
+%		join style
+%		cap style
+%		line width
+/setLineAttributes
+	{	begin
+		/JoinStyle exch def
+		/CapStyle  exch def
+		/LineWidth exch def
+		end }
+	def
+
+% creates a graphics context dictionary with the following information:
+%		/dictionary name
+%		foreground color
+%		background color
+%		line width
+%		cap style
+%		join style
+% this creates different graphical contexts for different drawing functions.
+/makeDict
+	{	5 dict 2 copy def begin	pop %% with dict name on top of stack
+		/FGcolor   exch def	%% define drawing attributes
+		/BGcolor   exch def	%% not heavily used
+		/LineWidth exch def
+		/CapStyle  exch def
+		/JoinStyle exch def
+		end }
+	def
+
+% makes the current dictionary attributes effective
+% this function takes the values in the current dictionary to set the context
+% these are the values currently being used: foreground, cap, join, and width
+/installGC
+	{
+		FGcolor currentgray ne
+		{FGcolor setgray} if		%% foreground color
+		CapStyle currentlinecap ne
+		{CapStyle setlinecap} if	%% cap style
+		JoinStyle currentlinejoin ne
+		{JoinStyle setlinejoin} if	%% join style
+		LineWidth currentlinewidth ne
+		{LineWidth setlinewidth} if }	%% line width
+	def
+
+/psDrawLine
+        {	gsave
+                newpath
+                yVal moveto
+                yVal lineto
+		begin installGC stroke end
+		grestore }
+        def
+
+/psDrawIStr
+        {	gsave
+		newpath					%% for rectangle
+                loadFont
+
+		/window exch def			%% get window type
+
+                %% draw bounding box with background color
+                /str exch def				%% get text string
+                str stringwidth pop 1 sub               %% width
+                FontHeight 1 sub                        %% height
+                currentfont begin			%% get font height
+                        FontBBox
+                end
+                /ypos exch def pop			%% define ypos
+                neg ypos add /offset exch def pop
+                /offset ypos offset div FontHeight mul def %% define offset
+                /h exch def /w exch def			%% define h
+                /y0 exch def				%% define y0
+                /x0 exch def				%% define x0
+                w h x0 y0 offset sub
+		window (title) eq
+		{hVal moveto drawRect}		       %% draws in title window
+		{rectangle} ifelse		       %% draws in view window
+		begin
+                BGcolor setgray fill	%% set background box color
+
+		x0 y0
+		window (title) eq 
+                {hVal}					%% print title text
+                {yVal} ifelse				%% print window text
+		moveto str 
+                FGcolor setgray show			%% set text color
+		end
+                grestore }
+        def
+
+/psDrawRect
+        {	gsave
+                newpath
+                rectangle
+		begin installGC stroke end
+		grestore }
+        def
+
+%-------------------------- script --------------------------%
+
+% 1 inch 1 inch translate
+
+   mark					%% mark bottom of our stack
+
+	0	0	1
+	1.000000	0.000000	/globalGC1	makeDict
+	0	0	1
+	1.000000	0.000000	/globalGC2	makeDict
+	0	0	1
+	1.000000	0.000000	/trashGC	makeDict
+	0	0	1
+	1.000000	0.000000	/globGC	makeDict
+	0	0	1
+	1.000000	0.000000	/anotherGC	makeDict
+	0	0	1
+	1.000000	0.000000	/graphGC	makeDict
+	0	0	1
+	1.000000	0.000000	/unitGC	makeDict
+
+    gsave	% save graphics state for clipping path
+
+	1.000000	1.000000	scale
+
+	24	376	400	setDim
+%%BoundingBox: 0 0 376 400
+	maxX maxY	0 0	rectangle	clip	% set clip path
+
+	globalGC1	400	187	0	187	psDrawLine
+	globalGC1	20	376	20	0	psDrawLine
+	globalGC1	20	156	20	156	psDrawLine
+	globalGC1	21	159	20	156	psDrawLine
+	globalGC1	23	166	21	159	psDrawLine
+	globalGC1	24	170	23	166	psDrawLine
+	globalGC1	25	175	24	170	psDrawLine
+	globalGC1	26	181	25	175	psDrawLine
+	globalGC1	27	187	26	181	psDrawLine
+	globalGC1	28	192	27	187	psDrawLine
+	globalGC1	29	198	28	192	psDrawLine
+	globalGC1	30	203	29	198	psDrawLine
+	globalGC1	31	208	30	203	psDrawLine
+	globalGC1	33	215	31	208	psDrawLine
+	globalGC1	34	217	33	215	psDrawLine
+	globalGC1	34	217	34	217	psDrawLine
+	globalGC1	34	217	34	217	psDrawLine
+	globalGC1	34	218	34	217	psDrawLine
+	globalGC1	35	218	34	218	psDrawLine
+	globalGC1	35	218	35	218	psDrawLine
+	globalGC1	35	217	35	218	psDrawLine
+	globalGC1	35	217	35	217	psDrawLine
+	globalGC1	35	217	35	217	psDrawLine
+	globalGC1	36	215	35	217	psDrawLine
+	globalGC1	38	208	36	215	psDrawLine
+	globalGC1	39	203	38	208	psDrawLine
+	globalGC1	40	198	39	203	psDrawLine
+	globalGC1	41	192	40	198	psDrawLine
+	globalGC1	42	187	41	192	psDrawLine
+	globalGC1	43	181	42	187	psDrawLine
+	globalGC1	44	175	43	181	psDrawLine
+	globalGC1	45	170	44	175	psDrawLine
+	globalGC1	46	166	45	170	psDrawLine
+	globalGC1	48	159	46	166	psDrawLine
+	globalGC1	49	157	48	159	psDrawLine
+	globalGC1	49	156	49	157	psDrawLine
+	globalGC1	49	156	49	156	psDrawLine
+	globalGC1	49	156	49	156	psDrawLine
+	globalGC1	49	156	49	156	psDrawLine
+	globalGC1	49	156	49	156	psDrawLine
+	globalGC1	50	156	49	156	psDrawLine
+	globalGC1	50	156	50	156	psDrawLine
+	globalGC1	50	156	50	156	psDrawLine
+	globalGC1	50	158	50	156	psDrawLine
+	globalGC1	50	164	50	158	psDrawLine
+	globalGC1	50	172	50	164	psDrawLine
+	globalGC1	50	177	50	172	psDrawLine
+	globalGC1	50	182	50	177	psDrawLine
+	globalGC1	51	188	50	182	psDrawLine
+	globalGC1	51	193	51	188	psDrawLine
+	globalGC1	51	202	51	193	psDrawLine
+	globalGC1	51	210	51	202	psDrawLine
+	globalGC1	51	216	51	210	psDrawLine
+	globalGC1	51	217	51	216	psDrawLine
+	globalGC1	52	218	51	217	psDrawLine
+	globalGC1	52	218	52	218	psDrawLine
+	globalGC1	52	218	52	218	psDrawLine
+	globalGC1	52	218	52	218	psDrawLine
+	globalGC1	52	217	52	218	psDrawLine
+	globalGC1	53	217	52	217	psDrawLine
+	globalGC1	54	216	53	217	psDrawLine
+	globalGC1	55	215	54	216	psDrawLine
+	globalGC1	57	212	55	215	psDrawLine
+	globalGC1	59	207	57	212	psDrawLine
+	globalGC1	61	202	59	207	psDrawLine
+	globalGC1	63	197	61	202	psDrawLine
+	globalGC1	65	191	63	197	psDrawLine
+	globalGC1	66	184	65	191	psDrawLine
+	globalGC1	68	178	66	184	psDrawLine
+	globalGC1	70	172	68	178	psDrawLine
+	globalGC1	72	167	70	172	psDrawLine
+	globalGC1	76	159	72	167	psDrawLine
+	globalGC1	78	157	76	159	psDrawLine
+	globalGC1	78	156	78	157	psDrawLine
+	globalGC1	79	156	78	156	psDrawLine
+	globalGC1	79	156	79	156	psDrawLine
+	globalGC1	79	156	79	156	psDrawLine
+	globalGC1	79	156	79	156	psDrawLine
+	globalGC1	79	156	79	156	psDrawLine
+	globalGC1	80	156	79	156	psDrawLine
+	globalGC1	80	156	80	156	psDrawLine
+	globalGC1	80	157	80	156	psDrawLine
+	globalGC1	80	160	80	157	psDrawLine
+	globalGC1	80	165	80	160	psDrawLine
+	globalGC1	80	171	80	165	psDrawLine
+	globalGC1	80	178	80	171	psDrawLine
+	globalGC1	80	185	80	178	psDrawLine
+	globalGC1	80	192	80	185	psDrawLine
+	globalGC1	80	199	80	192	psDrawLine
+	globalGC1	81	206	80	199	psDrawLine
+	globalGC1	81	211	81	206	psDrawLine
+	globalGC1	81	213	81	211	psDrawLine
+	globalGC1	81	215	81	213	psDrawLine
+	globalGC1	81	216	81	215	psDrawLine
+	globalGC1	81	216	81	216	psDrawLine
+	globalGC1	81	215	81	216	psDrawLine
+	globalGC1	81	215	81	215	psDrawLine
+	globalGC1	81	212	81	215	psDrawLine
+	globalGC1	81	208	81	212	psDrawLine
+	globalGC1	81	203	81	208	psDrawLine
+	globalGC1	81	198	81	203	psDrawLine
+	globalGC1	81	192	81	198	psDrawLine
+	globalGC1	82	186	81	192	psDrawLine
+	globalGC1	82	180	82	186	psDrawLine
+	globalGC1	82	175	82	180	psDrawLine
+	globalGC1	82	170	82	175	psDrawLine
+	globalGC1	82	165	82	170	psDrawLine
+	globalGC1	82	163	82	165	psDrawLine
+	globalGC1	82	162	82	163	psDrawLine
+	globalGC1	82	161	82	162	psDrawLine
+	globalGC1	82	161	82	161	psDrawLine
+	globalGC1	82	161	82	161	psDrawLine
+	globalGC1	82	162	82	161	psDrawLine
+	globalGC1	82	162	82	162	psDrawLine
+	globalGC1	83	162	82	162	psDrawLine
+	globalGC1	83	163	83	162	psDrawLine
+	globalGC1	83	166	83	163	psDrawLine
+	globalGC1	84	170	83	166	psDrawLine
+	globalGC1	85	175	84	170	psDrawLine
+	globalGC1	86	181	85	175	psDrawLine
+	globalGC1	87	187	86	181	psDrawLine
+	globalGC1	88	192	87	187	psDrawLine
+	globalGC1	89	198	88	192	psDrawLine
+	globalGC1	91	208	89	198	psDrawLine
+	globalGC1	93	215	91	208	psDrawLine
+	globalGC1	94	217	93	215	psDrawLine
+	globalGC1	94	217	94	217	psDrawLine
+	globalGC1	94	217	94	217	psDrawLine
+	globalGC1	94	218	94	217	psDrawLine
+	globalGC1	94	218	94	218	psDrawLine
+	globalGC1	95	218	94	218	psDrawLine
+	globalGC1	95	217	95	218	psDrawLine
+	globalGC1	95	217	95	217	psDrawLine
+	globalGC1	95	217	95	217	psDrawLine
+	globalGC1	96	215	95	217	psDrawLine
+	globalGC1	98	208	96	215	psDrawLine
+	globalGC1	99	203	98	208	psDrawLine
+	globalGC1	100	198	99	203	psDrawLine
+	globalGC1	101	192	100	198	psDrawLine
+	globalGC1	102	187	101	192	psDrawLine
+	globalGC1	103	181	102	187	psDrawLine
+	globalGC1	104	175	103	181	psDrawLine
+	globalGC1	105	170	104	175	psDrawLine
+	globalGC1	106	166	105	170	psDrawLine
+	globalGC1	108	159	106	166	psDrawLine
+	globalGC1	109	157	108	159	psDrawLine
+	globalGC1	109	156	109	157	psDrawLine
+	globalGC1	109	156	109	156	psDrawLine
+	globalGC1	109	156	109	156	psDrawLine
+	globalGC1	109	156	109	156	psDrawLine
+	globalGC1	109	156	109	156	psDrawLine
+	globalGC1	110	156	109	156	psDrawLine
+	globalGC1	110	156	110	156	psDrawLine
+	globalGC1	110	157	110	156	psDrawLine
+	globalGC1	110	159	110	157	psDrawLine
+	globalGC1	110	163	110	159	psDrawLine
+	globalGC1	110	168	110	163	psDrawLine
+	globalGC1	111	174	110	168	psDrawLine
+	globalGC1	111	181	111	174	psDrawLine
+	globalGC1	111	187	111	181	psDrawLine
+	globalGC1	111	194	111	187	psDrawLine
+	globalGC1	112	200	111	194	psDrawLine
+	globalGC1	112	206	112	200	psDrawLine
+	globalGC1	112	214	112	206	psDrawLine
+	globalGC1	113	217	112	214	psDrawLine
+	globalGC1	113	217	113	217	psDrawLine
+	globalGC1	113	218	113	217	psDrawLine
+	globalGC1	113	218	113	218	psDrawLine
+	globalGC1	113	218	113	218	psDrawLine
+	globalGC1	113	218	113	218	psDrawLine
+	globalGC1	114	217	113	218	psDrawLine
+	globalGC1	115	216	114	217	psDrawLine
+	globalGC1	117	214	115	216	psDrawLine
+	globalGC1	119	210	117	214	psDrawLine
+	globalGC1	121	205	119	210	psDrawLine
+	globalGC1	123	199	121	205	psDrawLine
+	globalGC1	125	193	123	199	psDrawLine
+	globalGC1	126	186	125	193	psDrawLine
+	globalGC1	128	180	126	186	psDrawLine
+	globalGC1	130	174	128	180	psDrawLine
+	globalGC1	132	168	130	174	psDrawLine
+	globalGC1	136	159	132	168	psDrawLine
+	globalGC1	138	157	136	159	psDrawLine
+	globalGC1	138	156	138	157	psDrawLine
+	globalGC1	139	156	138	156	psDrawLine
+	globalGC1	139	156	139	156	psDrawLine
+	globalGC1	139	156	139	156	psDrawLine
+	globalGC1	139	156	139	156	psDrawLine
+	globalGC1	139	156	139	156	psDrawLine
+	globalGC1	140	156	139	156	psDrawLine
+	globalGC1	140	156	140	156	psDrawLine
+	globalGC1	140	156	140	156	psDrawLine
+	globalGC1	140	158	140	156	psDrawLine
+	globalGC1	140	163	140	158	psDrawLine
+	globalGC1	140	171	140	163	psDrawLine
+	globalGC1	140	181	140	171	psDrawLine
+	globalGC1	141	191	140	181	psDrawLine
+	globalGC1	141	200	141	191	psDrawLine
+	globalGC1	141	208	141	200	psDrawLine
+	globalGC1	141	212	141	208	psDrawLine
+	globalGC1	141	213	141	212	psDrawLine
+	globalGC1	141	214	141	213	psDrawLine
+	globalGC1	141	214	141	214	psDrawLine
+	globalGC1	141	215	141	214	psDrawLine
+	globalGC1	141	214	141	215	psDrawLine
+	globalGC1	141	213	141	214	psDrawLine
+	globalGC1	142	211	141	213	psDrawLine
+	globalGC1	142	206	142	211	psDrawLine
+	globalGC1	142	200	142	206	psDrawLine
+	globalGC1	142	194	142	200	psDrawLine
+	globalGC1	143	187	142	194	psDrawLine
+	globalGC1	143	180	143	187	psDrawLine
+	globalGC1	143	174	143	180	psDrawLine
+	globalGC1	143	171	143	174	psDrawLine
+	globalGC1	143	168	143	171	psDrawLine
+	globalGC1	143	166	143	168	psDrawLine
+	globalGC1	143	166	143	166	psDrawLine
+	globalGC1	143	166	143	166	psDrawLine
+	globalGC1	143	167	143	166	psDrawLine
+	globalGC1	144	167	143	167	psDrawLine
+	globalGC1	144	168	144	167	psDrawLine
+	globalGC1	144	170	144	168	psDrawLine
+	globalGC1	145	175	144	170	psDrawLine
+	globalGC1	146	181	145	175	psDrawLine
+	globalGC1	147	187	146	181	psDrawLine
+	globalGC1	148	192	147	187	psDrawLine
+	globalGC1	149	198	148	192	psDrawLine
+	globalGC1	151	208	149	198	psDrawLine
+	globalGC1	153	215	151	208	psDrawLine
+	globalGC1	154	217	153	215	psDrawLine
+	globalGC1	154	217	154	217	psDrawLine
+	globalGC1	155	218	154	217	psDrawLine
+	globalGC1	155	218	155	218	psDrawLine
+	globalGC1	155	217	155	218	psDrawLine
+	globalGC1	155	217	155	217	psDrawLine
+	globalGC1	155	217	155	217	psDrawLine
+	globalGC1	156	215	155	217	psDrawLine
+	globalGC1	158	208	156	215	psDrawLine
+	globalGC1	159	203	158	208	psDrawLine
+	globalGC1	160	198	159	203	psDrawLine
+	globalGC1	161	192	160	198	psDrawLine
+	globalGC1	162	187	161	192	psDrawLine
+	globalGC1	163	181	162	187	psDrawLine
+	globalGC1	164	175	163	181	psDrawLine
+	globalGC1	165	170	164	175	psDrawLine
+	globalGC1	166	166	165	170	psDrawLine
+	globalGC1	168	159	166	166	psDrawLine
+	globalGC1	169	157	168	159	psDrawLine
+	globalGC1	169	156	169	157	psDrawLine
+	globalGC1	169	156	169	156	psDrawLine
+	globalGC1	169	156	169	156	psDrawLine
+	globalGC1	169	156	169	156	psDrawLine
+	globalGC1	169	156	169	156	psDrawLine
+	globalGC1	169	156	169	156	psDrawLine
+	globalGC1	170	156	169	156	psDrawLine
+	globalGC1	170	156	170	156	psDrawLine
+	globalGC1	170	158	170	156	psDrawLine
+	globalGC1	170	163	170	158	psDrawLine
+	globalGC1	171	171	170	163	psDrawLine
+	globalGC1	171	181	171	171	psDrawLine
+	globalGC1	172	191	171	181	psDrawLine
+	globalGC1	172	200	172	191	psDrawLine
+	globalGC1	173	208	172	200	psDrawLine
+	globalGC1	173	214	173	208	psDrawLine
+	globalGC1	173	216	173	214	psDrawLine
+	globalGC1	174	217	173	216	psDrawLine
+	globalGC1	174	218	174	217	psDrawLine
+	globalGC1	174	218	174	218	psDrawLine
+	globalGC1	175	217	174	218	psDrawLine
+	globalGC1	177	215	175	217	psDrawLine
+	globalGC1	179	212	177	215	psDrawLine
+	globalGC1	181	207	179	212	psDrawLine
+	globalGC1	183	201	181	207	psDrawLine
+	globalGC1	185	195	183	201	psDrawLine
+	globalGC1	186	188	185	195	psDrawLine
+	globalGC1	188	181	186	188	psDrawLine
+	globalGC1	190	175	188	181	psDrawLine
+	globalGC1	192	169	190	175	psDrawLine
+	globalGC1	194	164	192	169	psDrawLine
+	globalGC1	196	160	194	164	psDrawLine
+	globalGC1	198	157	196	160	psDrawLine
+	globalGC1	198	156	198	157	psDrawLine
+	globalGC1	199	156	198	156	psDrawLine
+	globalGC1	199	156	199	156	psDrawLine
+	globalGC1	199	156	199	156	psDrawLine
+	globalGC1	199	156	199	156	psDrawLine
+	globalGC1	200	156	199	156	psDrawLine
+	globalGC1	200	156	200	156	psDrawLine
+	globalGC1	200	157	200	156	psDrawLine
+	globalGC1	200	160	200	157	psDrawLine
+	globalGC1	200	165	200	160	psDrawLine
+	globalGC1	200	171	200	165	psDrawLine
+	globalGC1	201	178	200	171	psDrawLine
+	globalGC1	201	186	201	178	psDrawLine
+	globalGC1	201	193	201	186	psDrawLine
+	globalGC1	201	200	201	193	psDrawLine
+	globalGC1	202	207	201	200	psDrawLine
+	globalGC1	202	210	202	207	psDrawLine
+	globalGC1	202	211	202	210	psDrawLine
+	globalGC1	202	212	202	211	psDrawLine
+	globalGC1	202	213	202	212	psDrawLine
+	globalGC1	202	213	202	213	psDrawLine
+	globalGC1	202	213	202	213	psDrawLine
+	globalGC1	202	213	202	213	psDrawLine
+	globalGC1	202	212	202	213	psDrawLine
+	globalGC1	202	211	202	212	psDrawLine
+	globalGC1	202	208	202	211	psDrawLine
+	globalGC1	203	201	202	208	psDrawLine
+	globalGC1	203	192	203	201	psDrawLine
+	globalGC1	204	183	203	192	psDrawLine
+	globalGC1	204	174	204	183	psDrawLine
+	globalGC1	204	171	204	174	psDrawLine
+	globalGC1	205	173	204	171	psDrawLine
+	globalGC1	205	174	205	173	psDrawLine
+	globalGC1	205	175	205	174	psDrawLine
+	globalGC1	206	181	205	175	psDrawLine
+	globalGC1	207	187	206	181	psDrawLine
+	globalGC1	208	192	207	187	psDrawLine
+	globalGC1	209	198	208	192	psDrawLine
+	globalGC1	211	208	209	198	psDrawLine
+	globalGC1	213	215	211	208	psDrawLine
+	globalGC1	214	217	213	215	psDrawLine
+	globalGC1	214	217	214	217	psDrawLine
+	globalGC1	214	217	214	217	psDrawLine
+	globalGC1	214	218	214	217	psDrawLine
+	globalGC1	215	218	214	218	psDrawLine
+	globalGC1	215	218	215	218	psDrawLine
+	globalGC1	215	217	215	218	psDrawLine
+	globalGC1	215	217	215	217	psDrawLine
+	globalGC1	215	217	215	217	psDrawLine
+	globalGC1	216	215	215	217	psDrawLine
+	globalGC1	218	208	216	215	psDrawLine
+	globalGC1	219	203	218	208	psDrawLine
+	globalGC1	220	198	219	203	psDrawLine
+	globalGC1	221	192	220	198	psDrawLine
+	globalGC1	222	187	221	192	psDrawLine
+	globalGC1	223	181	222	187	psDrawLine
+	globalGC1	224	175	223	181	psDrawLine
+	globalGC1	225	170	224	175	psDrawLine
+	globalGC1	226	166	225	170	psDrawLine
+	globalGC1	228	159	226	166	psDrawLine
+	globalGC1	229	157	228	159	psDrawLine
+	globalGC1	229	156	229	157	psDrawLine
+	globalGC1	229	156	229	156	psDrawLine
+	globalGC1	229	156	229	156	psDrawLine
+	globalGC1	229	156	229	156	psDrawLine
+	globalGC1	229	156	229	156	psDrawLine
+	globalGC1	230	156	229	156	psDrawLine
+	globalGC1	230	157	230	156	psDrawLine
+	globalGC1	230	161	230	157	psDrawLine
+	globalGC1	231	167	230	161	psDrawLine
+	globalGC1	231	174	231	167	psDrawLine
+	globalGC1	232	181	231	174	psDrawLine
+	globalGC1	232	189	232	181	psDrawLine
+	globalGC1	233	197	232	189	psDrawLine
+	globalGC1	233	204	233	197	psDrawLine
+	globalGC1	234	211	233	204	psDrawLine
+	globalGC1	234	215	234	211	psDrawLine
+	globalGC1	234	216	234	215	psDrawLine
+	globalGC1	235	217	234	216	psDrawLine
+	globalGC1	235	218	235	217	psDrawLine
+	globalGC1	235	218	235	218	psDrawLine
+	globalGC1	236	217	235	218	psDrawLine
+	globalGC1	237	216	236	217	psDrawLine
+	globalGC1	239	213	237	216	psDrawLine
+	globalGC1	241	209	239	213	psDrawLine
+	globalGC1	243	203	241	209	psDrawLine
+	globalGC1	244	197	243	203	psDrawLine
+	globalGC1	246	190	244	197	psDrawLine
+	globalGC1	248	183	246	190	psDrawLine
+	globalGC1	250	176	248	183	psDrawLine
+	globalGC1	252	170	250	176	psDrawLine
+	globalGC1	254	164	252	170	psDrawLine
+	globalGC1	256	160	254	164	psDrawLine
+	globalGC1	258	157	256	160	psDrawLine
+	globalGC1	259	156	258	157	psDrawLine
+	globalGC1	259	156	259	156	psDrawLine
+	globalGC1	259	156	259	156	psDrawLine
+	globalGC1	259	156	259	156	psDrawLine
+	globalGC1	260	156	259	156	psDrawLine
+	globalGC1	260	156	260	156	psDrawLine
+	globalGC1	260	157	260	156	psDrawLine
+	globalGC1	260	159	260	157	psDrawLine
+	globalGC1	260	162	260	159	psDrawLine
+	globalGC1	260	166	260	162	psDrawLine
+	globalGC1	261	172	260	166	psDrawLine
+	globalGC1	261	177	261	172	psDrawLine
+	globalGC1	261	183	261	177	psDrawLine
+	globalGC1	261	189	261	183	psDrawLine
+	globalGC1	262	195	261	189	psDrawLine
+	globalGC1	262	201	262	195	psDrawLine
+	globalGC1	262	206	262	201	psDrawLine
+	globalGC1	262	208	262	206	psDrawLine
+	globalGC1	262	210	262	208	psDrawLine
+	globalGC1	262	211	262	210	psDrawLine
+	globalGC1	262	211	262	211	psDrawLine
+	globalGC1	262	212	262	211	psDrawLine
+	globalGC1	262	211	262	212	psDrawLine
+	globalGC1	262	211	262	211	psDrawLine
+	globalGC1	263	210	262	211	psDrawLine
+	globalGC1	263	208	263	210	psDrawLine
+	globalGC1	263	203	263	208	psDrawLine
+	globalGC1	264	197	263	203	psDrawLine
+	globalGC1	264	191	264	197	psDrawLine
+	globalGC1	265	185	264	191	psDrawLine
+	globalGC1	265	179	265	185	psDrawLine
+	globalGC1	265	178	265	179	psDrawLine
+	globalGC1	265	177	265	178	psDrawLine
+	globalGC1	265	177	265	177	psDrawLine
+	globalGC1	265	177	265	177	psDrawLine
+	globalGC1	265	177	265	177	psDrawLine
+	globalGC1	266	178	265	177	psDrawLine
+	globalGC1	266	180	266	178	psDrawLine
+	globalGC1	266	181	266	180	psDrawLine
+	globalGC1	267	187	266	181	psDrawLine
+	globalGC1	268	192	267	187	psDrawLine
+	globalGC1	269	198	268	192	psDrawLine
+	globalGC1	271	208	269	198	psDrawLine
+	globalGC1	273	215	271	208	psDrawLine
+	globalGC1	274	217	273	215	psDrawLine
+	globalGC1	274	217	274	217	psDrawLine
+	globalGC1	274	217	274	217	psDrawLine
+	globalGC1	274	218	274	217	psDrawLine
+	globalGC1	274	218	274	218	psDrawLine
+	globalGC1	275	218	274	218	psDrawLine
+	globalGC1	275	217	275	218	psDrawLine
+	globalGC1	275	217	275	217	psDrawLine
+	globalGC1	275	217	275	217	psDrawLine
+	globalGC1	276	215	275	217	psDrawLine
+	globalGC1	278	208	276	215	psDrawLine
+	globalGC1	279	203	278	208	psDrawLine
+	globalGC1	280	198	279	203	psDrawLine
+	globalGC1	281	192	280	198	psDrawLine
+	globalGC1	282	187	281	192	psDrawLine
+	globalGC1	283	181	282	187	psDrawLine
+	globalGC1	284	175	283	181	psDrawLine
+	globalGC1	285	170	284	175	psDrawLine
+	globalGC1	286	166	285	170	psDrawLine
+	globalGC1	288	159	286	166	psDrawLine
+	globalGC1	289	157	288	159	psDrawLine
+	globalGC1	289	156	289	157	psDrawLine
+	globalGC1	289	156	289	156	psDrawLine
+	globalGC1	289	156	289	156	psDrawLine
+	globalGC1	289	156	289	156	psDrawLine
+	globalGC1	289	156	289	156	psDrawLine
+	globalGC1	290	156	289	156	psDrawLine
+	globalGC1	290	157	290	156	psDrawLine
+	globalGC1	290	160	290	157	psDrawLine
+	globalGC1	291	164	290	160	psDrawLine
+	globalGC1	291	169	291	164	psDrawLine
+	globalGC1	292	176	291	169	psDrawLine
+	globalGC1	292	182	292	176	psDrawLine
+	globalGC1	293	189	292	182	psDrawLine
+	globalGC1	293	196	293	189	psDrawLine
+	globalGC1	294	202	293	196	psDrawLine
+	globalGC1	294	208	294	202	psDrawLine
+	globalGC1	295	216	294	208	psDrawLine
+	globalGC1	295	217	295	216	psDrawLine
+	globalGC1	296	217	295	217	psDrawLine
+	globalGC1	296	218	296	217	psDrawLine
+	globalGC1	296	218	296	218	psDrawLine
+	globalGC1	297	217	296	218	psDrawLine
+	globalGC1	297	217	297	217	psDrawLine
+	globalGC1	298	216	297	217	psDrawLine
+	globalGC1	299	215	298	216	psDrawLine
+	globalGC1	301	211	299	215	psDrawLine
+	globalGC1	303	205	301	211	psDrawLine
+	globalGC1	305	199	303	205	psDrawLine
+	globalGC1	306	192	305	199	psDrawLine
+	globalGC1	308	185	306	192	psDrawLine
+	globalGC1	310	177	308	185	psDrawLine
+	globalGC1	312	171	310	177	psDrawLine
+	globalGC1	314	165	312	171	psDrawLine
+	globalGC1	316	160	314	165	psDrawLine
+	globalGC1	318	157	316	160	psDrawLine
+	globalGC1	318	157	318	157	psDrawLine
+	globalGC1	319	156	318	157	psDrawLine
+	globalGC1	319	156	319	156	psDrawLine
+	globalGC1	319	156	319	156	psDrawLine
+	globalGC1	319	156	319	156	psDrawLine
+	globalGC1	319	156	319	156	psDrawLine
+	globalGC1	320	156	319	156	psDrawLine
+	globalGC1	320	156	320	156	psDrawLine
+	globalGC1	320	158	320	156	psDrawLine
+	globalGC1	320	164	320	158	psDrawLine
+	globalGC1	321	172	320	164	psDrawLine
+	globalGC1	321	181	321	172	psDrawLine
+	globalGC1	322	191	321	181	psDrawLine
+	globalGC1	322	201	322	191	psDrawLine
+	globalGC1	323	205	322	201	psDrawLine
+	globalGC1	323	207	323	205	psDrawLine
+	globalGC1	323	209	323	207	psDrawLine
+	globalGC1	323	209	323	209	psDrawLine
+	globalGC1	323	210	323	209	psDrawLine
+	globalGC1	323	210	323	210	psDrawLine
+	globalGC1	323	209	323	210	psDrawLine
+	globalGC1	323	209	323	209	psDrawLine
+	globalGC1	323	209	323	209	psDrawLine
+	globalGC1	323	207	323	209	psDrawLine
+	globalGC1	324	200	323	207	psDrawLine
+	globalGC1	325	192	324	200	psDrawLine
+	globalGC1	326	187	325	192	psDrawLine
+	globalGC1	326	185	326	187	psDrawLine
+	globalGC1	326	183	326	185	psDrawLine
+	globalGC1	326	183	326	183	psDrawLine
+	globalGC1	326	182	326	183	psDrawLine
+	globalGC1	326	182	326	182	psDrawLine
+	globalGC1	326	182	326	182	psDrawLine
+	globalGC1	326	183	326	182	psDrawLine
+	globalGC1	327	184	326	183	psDrawLine
+	globalGC1	327	187	327	184	psDrawLine
+	globalGC1	328	192	327	187	psDrawLine
+	globalGC1	329	198	328	192	psDrawLine
+	globalGC1	331	208	329	198	psDrawLine
+	globalGC1	333	215	331	208	psDrawLine
+	globalGC1	334	217	333	215	psDrawLine
+	globalGC1	334	217	334	217	psDrawLine
+	globalGC1	334	217	334	217	psDrawLine
+	globalGC1	334	218	334	217	psDrawLine
+	globalGC1	334	218	334	218	psDrawLine
+	globalGC1	335	218	334	218	psDrawLine
+	globalGC1	335	217	335	218	psDrawLine
+	globalGC1	335	217	335	217	psDrawLine
+	globalGC1	335	217	335	217	psDrawLine
+	globalGC1	336	215	335	217	psDrawLine
+	globalGC1	338	208	336	215	psDrawLine
+	globalGC1	339	203	338	208	psDrawLine
+	globalGC1	340	198	339	203	psDrawLine
+	globalGC1	341	192	340	198	psDrawLine
+	globalGC1	342	187	341	192	psDrawLine
+	globalGC1	343	181	342	187	psDrawLine
+	globalGC1	344	175	343	181	psDrawLine
+	globalGC1	345	170	344	175	psDrawLine
+	globalGC1	346	166	345	170	psDrawLine
+	globalGC1	348	159	346	166	psDrawLine
+	globalGC1	349	157	348	159	psDrawLine
+	globalGC1	349	156	349	157	psDrawLine
+	globalGC1	349	156	349	156	psDrawLine
+	globalGC1	349	156	349	156	psDrawLine
+	globalGC1	349	156	349	156	psDrawLine
+	globalGC1	350	156	349	156	psDrawLine
+	globalGC1	350	156	350	156	psDrawLine
+	globalGC1	350	157	350	156	psDrawLine
+	globalGC1	350	159	350	157	psDrawLine
+	globalGC1	351	162	350	159	psDrawLine
+	globalGC1	351	167	351	162	psDrawLine
+	globalGC1	352	172	351	167	psDrawLine
+	globalGC1	352	177	352	172	psDrawLine
+	globalGC1	353	183	352	177	psDrawLine
+	globalGC1	353	189	353	183	psDrawLine
+	globalGC1	354	195	353	189	psDrawLine
+	globalGC1	354	201	354	195	psDrawLine
+	globalGC1	355	211	354	201	psDrawLine
+	globalGC1	356	216	355	211	psDrawLine
+	globalGC1	356	217	356	216	psDrawLine
+	globalGC1	357	218	356	217	psDrawLine
+	globalGC1	357	218	357	218	psDrawLine
+	globalGC1	357	218	357	218	psDrawLine
+	globalGC1	357	217	357	218	psDrawLine
+	globalGC1	358	217	357	217	psDrawLine
+	globalGC1	359	216	358	217	psDrawLine
+	globalGC1	361	212	359	216	psDrawLine
+	globalGC1	363	207	361	212	psDrawLine
+	globalGC1	364	201	363	207	psDrawLine
+	globalGC1	366	194	364	201	psDrawLine
+	globalGC1	368	186	366	194	psDrawLine
+	globalGC1	370	179	368	186	psDrawLine
+	globalGC1	372	172	370	179	psDrawLine
+	globalGC1	374	165	372	172	psDrawLine
+	globalGC1	376	160	374	165	psDrawLine
+	globalGC1	379	156	376	160	psDrawLine
+	globalGC1	361	62	20	156	psDrawRect
+	unitGC	20	372	20	368	psDrawLine
+	unitGC	17	362	(0)	(window)	psDrawIStr
+	unitGC	60	372	60	368	psDrawLine
+	unitGC	57	362	(2)	(window)	psDrawIStr
+	unitGC	100	372	100	368	psDrawLine
+	unitGC	97	362	(4)	(window)	psDrawIStr
+	unitGC	140	372	140	368	psDrawLine
+	unitGC	137	362	(6)	(window)	psDrawIStr
+	unitGC	180	372	180	368	psDrawLine
+	unitGC	177	362	(8)	(window)	psDrawIStr
+	unitGC	220	372	220	368	psDrawLine
+	unitGC	214	362	(10)	(window)	psDrawIStr
+	unitGC	260	372	260	368	psDrawLine
+	unitGC	254	362	(12)	(window)	psDrawIStr
+	unitGC	300	372	300	368	psDrawLine
+	unitGC	294	362	(14)	(window)	psDrawIStr
+	unitGC	340	372	340	368	psDrawLine
+	unitGC	334	362	(16)	(window)	psDrawIStr
+	unitGC	380	372	380	368	psDrawLine
+	unitGC	374	362	(18)	(window)	psDrawIStr
+	unitGC	6	187	2	187	psDrawLine
+	unitGC	8	191	(0)	(window)	psDrawIStr
+	unitGC	6	156	2	156	psDrawLine
+	unitGC	8	160	(1)	(window)	psDrawIStr
+	unitGC	6	125	2	125	psDrawLine
+	unitGC	8	129	(2)	(window)	psDrawIStr
+	unitGC	6	94	2	94	psDrawLine
+	unitGC	8	98	(3)	(window)	psDrawIStr
+	unitGC	6	63	2	63	psDrawLine
+	unitGC	8	67	(4)	(window)	psDrawIStr
+	unitGC	6	33	2	33	psDrawLine
+	unitGC	8	37	(5)	(window)	psDrawIStr
+	unitGC	6	2	2	2	psDrawLine
+	unitGC	8	6	(6)	(window)	psDrawIStr
+	unitGC	6	218	2	218	psDrawLine
+	unitGC	8	222	(-1)	(window)	psDrawIStr
+	unitGC	6	248	2	248	psDrawLine
+	unitGC	8	252	(-2)	(window)	psDrawIStr
+	unitGC	6	279	2	279	psDrawLine
+	unitGC	8	283	(-3)	(window)	psDrawIStr
+	unitGC	6	310	2	310	psDrawLine
+	unitGC	8	314	(-4)	(window)	psDrawIStr
+	unitGC	6	341	2	341	psDrawLine
+	unitGC	8	345	(-5)	(window)	psDrawIStr
+	unitGC	6	372	2	372	psDrawLine
+	unitGC	8	376	(-6)	(window)	psDrawIStr
+
+    grestore	% restore graphics state
+
+
+   cleartomark					%% clearing operand stack
+
+end		%% pops mainDict from dictionary stack
+
+showpage
+
+%-------------------------- end --------------------------%

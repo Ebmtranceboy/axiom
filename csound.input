@@ -1,0 +1,72 @@
+epsilon := 10^(-15)
+
+linseg(start, dur, end, x) == (x*end + (dur-x)*start)/dur
+
+--between -1 and 1, period 1
+sawtooth x == -2 * atan (1/tan(%pi * x)) / %pi
+
+--between 0 and 1, period 1/freq
+phasor(freq, x) == (1+sawtooth(x*freq))/2
+
+entier x == x - phasor(1, x)
+
+wrap(xminmax,x) == 
+  (xmin, xmax) := (select(xminmax, 0), select(xminmax, 1))
+  deltax := xmax - xmin
+  x - entier((x-xmin)/deltax) * deltax
+
+--periodic(xminmax, f, x) == f(wrap(xminmax,x))
+
+-- boolean signals: 0->false, 1->true
+et(a,b) == a*b
+ou(a,b) == a+b-a*b
+oux(a,b) == a+b-2*a*b
+
+sign x == x/abs(x)
+
+positive? x == (1+sign x)/2
+negative? x == (1-sign x)/2
+
+parity x == cos(%pi * x)
+
+even? x == positive?(parity x)
+odd? x == negative?(parity x)
+
+piecewise(pieces) ==
+  terms := map(ux +-> select(ux,0)*select(ux,1), pieces)
+  reduce(+, terms)
+
+saturate (yminmax, y) ==
+  (ymin, ymax) := (select(yminmax, 0), select(yminmax,1))
+  piecewise([(negative?(y - ymin), ymin), 
+              (positive?(y - ymax), ymax),
+               (positive?(y - ymin) &et negative?(y - ymax), y)])
+
+mirror(xminmax, x) ==
+  (xmin, xmax) := (select(xminmax, 0), select(xminmax, 1))
+  deltax := xmax - xmin
+  nx := entier((x-xmin)/deltax)
+  n := entier((xmax-x)/deltax)
+  piecewise([(positive?(x-xmax), 
+                piecewise([(even? nx, x - nx*deltax),
+                            (odd? nx, 2*xmin - (x - (nx+1)*deltax))])),
+              (negative?(x-xmin),
+                piecewise([(even? n, x + n*deltax),
+                            (odd? n, 2*xmax - (x + (n+1)*deltax))])),
+               (negative?(x-xmax) &et positive?(x-xmin), x)])
+
+-- period 1 etendue 2
+cosinone x ==
+  clos_t3 t == t*(4*t^2-3)
+  clos_t3(mirror((-0.5,0.5),  2*x-0.5))
+
+-- period 1 etendue 2
+sinone x ==
+  clos_t3 t == t*(4*t^2-3)
+  clos_t3(mirror((-0.5, 0.5), -2*x))
+
+hardSyncCosinone(masterPeriod, slavePeriod, x) == 
+  cosinone(wrap((0, slavePeriod), wrap((0,masterPeriod), x))*masterPeriod/slavePeriod)
+
+hsCos1_08 x == hardSyncCosinone(1, 0.8, x)
+testcsound() == draw(hsCos1_08, epsilon..6)

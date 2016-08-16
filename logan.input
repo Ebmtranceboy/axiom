@@ -1,0 +1,31 @@
+)clear completely
+)include csound.input
+
+audioPeriod := 3
+numberOfPeriods := 6
+totalTime := audioPeriod * numberOfPeriods
+
+wet x == linseg(0.95, totalTime, 0.67, x)
+
+master :=  2/audioPeriod
+
+phm x == phasor (master, x)
+phm12 x == phasor (master/2, x)
+env x == 2*phm12 x - phm x
+alpha x == 2-wet x
+
+phmod x == 0.5-(phm x-0.5)
+func x == mirror((0,1), alpha x*phmod x)
+ramp x == alpha x * (wet x * phmod x - func x)/(alpha x-1)/2
+saw x == - ramp x * (1/alpha x-0.5)
+
+func4 x == saturate((0,1), alpha x * phm x/(alpha x-1))
+pick x == mirror((0,1), 2 * func4 x)
+buzine x == pick x * (0.5-(1-wet x)/(2-wet x))
+
+onesig x == cosinone (phm x + buzine x) -- saw -- pulse -- buzz -- pulsaw -- 
+twosig x == cosinone (phm x + saw x) -- pulse -- buzz -- pulsaw -- buzine -- 
+
+logan x ==  (1-env x)*onesig x + env x * twosig x
+
+testlogan() == draw(logan , epsilon..totalTime)

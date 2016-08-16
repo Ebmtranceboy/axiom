@@ -1,0 +1,75 @@
+
+periodic (xminmax, fmotif, x) ==
+  (xmin, xmax) := (select(xminmax, 0), select(xminmax,1))
+  period := xmax - xmin
+  x < xmin  => periodic ((xmin,xmax), fmotif, x+period)
+  x > xmax  => periodic ((xmin,xmax), fmotif, x-period)
+  fmotif x
+
+saturate (yminmax, f, x) ==
+  (ymin, ymax) := (select(yminmax, 0), select(yminmax,1))
+  y := f x
+  y < ymin  => ymin
+  y > ymax  => ymax
+  y
+
+wrap (yminmax, y) ==
+  (ymin, ymax) := (select(yminmax, 0), select(yminmax,1))
+  deltay := ymax - ymin
+  y < ymin => wrap (yminmax, y + deltay)
+  y > ymax => wrap (yminmax, y - deltay)
+  y
+
+--mirror (ymin,ymax) f x = rescale (ymin,ymax) $ f x
+--  where rescale (ymin,ymax) y
+--          | y < ymin  = rescale (ymin,ymax) (2*ymin - y)
+--          | y > ymax  = rescale (ymin,ymax) (2*ymax - y) 
+--          | otherwise = y
+--
+--hardSync f masterPeriod slavePeriod = 
+--  periodic (0,masterPeriod) $ periodic (0,slavePeriod) (\x-> f (x*masterPeriod/slavePeriod))
+--
+--phasor audioPeriod = periodic (0,audioPeriod) (\x->x/audioPeriod)
+--
+--linseg [v] _ = v
+--linseg [v0,t,v1] x = x/t*(v1-v0)+v0
+--linseg (v0:t:v1:rest) x = if x<t then linseg [v0,t,v1] x else linseg (v1:rest) (x-t)
+--
+--sinone x = f $ wrap (-1,1) id $ 2*x-1
+--  where f t 
+--          | abs t <= 0.5 = t*(4*t^2-3)
+--          | t < -0.5     = f $ -t -1
+--          | otherwise    = f $ 1 - t
+--
+--cosinone x = f $ mirror (-0.5,0.5) id $ 2*x-0.5
+--  where f t = t*(4*t^2-3)
+--
+--testFct audioPeriod = periodic (0,audioPeriod) $ \x->4*(x-0.5)^2
+--cosine audioPeriod = periodic (0,audioPeriod) $ \x -> cos $ 2*pi*x
+--truncatedCosine audioPeriod = limit (-0.5,0.5) $ cosine audioPeriod
+--wrappedCosine audioPeriod = wrap (-0.75,0.5) $ cosine audioPeriod
+--mirrorredCosine audioPeriod = mirror (-0.25,0.75) $ cosine audioPeriod
+--hardsyncedCosine hsperiod audioPeriod = hardSync (\x->cos(2*pi*x)) audioPeriod hsperiod
+--hardsyncedSinone hsperiod audioPeriod = hardSync sinone audioPeriod hsperiod
+--hardsyncedCosinone hsperiod audioPeriod = hardSync cosinone audioPeriod hsperiod
+--
+--
+--
+--linseg(start, dur, end) == 
+--   compiledFunction((x*end + (dur-x)*start)/dur, x)$MakeUnaryCompiledFunction(POLY FRAC INT, FRAC INT, FRAC INT)
+--
+--sawtooth x == -2 * atan (1/tan(%pi * x)) / %pi
+--
+--phasor(freq, x) == (1+sawtooth(x*freq))/2
+--
+--ph freq == compiledFunction(freq/sin(x),x)$MakeUnaryCompiledFunction(EF(INT,FLOAT), FRAC INT, EF(INT,FLOAT))
+--
+----ph freq == compiledFunction((1+sawtooth(x*freq))/2,x)$MakeUnaryCompiledFunction(FRAC POLY FLOAT, FLOAT, FLOAT)
+--entier x == x - phasor(1, x)
+--
+--wrap(a,x) == x - entier(x/a) * a
+--wr(a,x) == 
+--  x < 0 => wr(a,x+a)
+--  x > a => wr(a,x-a)
+--  x
+--sgn x == x/abs(x)
