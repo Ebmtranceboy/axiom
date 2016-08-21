@@ -13,6 +13,7 @@ summary()
 )set functions cache all
 )set expose add constructor OutputForm
 )set expose drop constructor OutputForm
+)set output abbreviate on
 )set streams calculate 5
 )describe categoryName
 )include filename
